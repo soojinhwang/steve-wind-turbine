@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+    <meta name="msapplication-config" content="/docs/4.4/assets/img/favicons/browserconfig.xml">
+    <meta name="theme-color" content="#563d7c">
+
+    <style>
+
+    </style>
+  </head>
+  <body>
+    <div class="container" style="width: 800px;">
+      <h2 style="text-align: center; margin: 20px;">WIND TURBINE SETTINGS</h2>
+      <form name="configForm" class="d-flex align-items-center justify-content-center">
+        <fieldset class="form-group">
+          <legend class="col-form-label" style="text-align: center;"><b>SELECT A PATTERN</b></legend>
+          <div class="d-flex flex-column">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="mode" id="gridRadios1" value="1">
+              <label class="form-check-label" for="gridRadios1">
+                Pattern 1 (Star)
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="mode" id="gridRadios2" value="2">
+              <label class="form-check-label" for="gridRadios2">
+                Pattern 2 (Waves)
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="mode" id="gridRadios3" value="3">
+              <label class="form-check-label" for="gridRadios3">
+                Pattern 3 (Flower)
+              </label>
+            </div>
+            <br>
+            <div class="form-group">
+              <div class="d-flex flex-column">
+                <label for="messageInput" style="text-align: center;"><b>WRITE A MESSAGE</b></label>
+                <!-- THERE NEEDS TO BE SOME EVENT LISTENER SIMILAR TO THE IMAGE UPLOAD HERE FOR THE TEXT
+                      Also the JS in the script section needs to be updated -->
+                <input id="messageInput" type="text">  <!-- onchange="function();" -->
+                <div id="imgTest"></div>
+              </div>
+            </div>
+            <br>
+            <div class="form-group">
+              <div class="d-flex flex-column">
+                <label for="inputFileToLoad" style="text-align: center;"><b>UPLOAD AN IMAGE</b></label>
+                <input id="inputFileToLoad" type="file" onchange="encodeImageFileAsURL();">
+                <div id="imgTest"></div>
+              </div>
+            </div>
+            <br>
+            <div class="form-group">
+              <div class="d-flex justify-content-center">
+                <button name="submitButton" value="" type="submit" class="btn btn-success">Upload</button>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+
+
+<!-- ROBIN'S HTML
+    <form name="configForm">
+      <fieldset class="form-group">
+        <div class="row">
+          <legend class="col-form-label col-sm-2 pt-0">Mode Select</legend>
+          <div class="col-sm-10">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="mode" id="gridRadios1" value="1">
+              <label class="form-check-label" for="gridRadios1">
+                Mode 1
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="mode" id="gridRadios2" value="2">
+              <label class="form-check-label" for="gridRadios2">
+                Mode 2
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="mode" id="gridRadios3" value="3">
+              <label class="form-check-label" for="gridRadios3">
+                Mode 3
+              </label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+      <div class="form-group row">
+        <input id="inputFileToLoad" type="file" onchange="encodeImageFileAsURL();" />
+        <div id="imgTest"></div>
+      </div>
+      <div class="form-group row">
+        <div class="col-sm-10">
+          <button name="submitButton" value="" type="submit" class="btn btn-primary">Upload</button>
+        </div>
+      </div>
+    </form>
+    <div id="successMessage" style="display:none;">Config Updated!</div>
+    <div id="failureMessage" style="display:none;">Config Update Failed!</div>
+    <div id="loadingSpinner" class="spinner-border" role="status" style="display:none;"></div>
+  -->
+
+    <script>
+      const scriptURL = '<?= getSubmitFormURL() ?>';
+      const configForm = document.forms['configForm'];
+
+      let config = JSON.parse(<?= WindTurbineCore.getConfig() ?>);
+      for(var property in config){
+        var configElementName = property;
+        var configElementValue = config[property];
+        $('input[name='+configElementName+']').val([configElementValue.toString()]);
+      }
+
+      function showSuccess() {
+        document.getElementById('successMessage').style.display = "block";
+        document.getElementById('loadingSpinner').style.display = "none";
+        setTimeout(function() {
+          document.getElementById('successMessage').style.display = "none";
+        },2000);
+
+      }
+      function showFailure() {
+        document.getElementById('failureMessage').style.display = "block";
+        document.getElementById('loadingSpinner').style.display = "none";
+        setTimeout(function() {
+          document.getElementById('failureMessage').style.display = "none";
+        },2000);
+
+      }
+
+      configForm.addEventListener('submit', e => {
+        e.preventDefault()
+        document.getElementById("loadingSpinner").style = "display:block";
+        let requestData = new FormData(configForm);
+        let loadedImageSource = document.getElementById("imgTest").src;
+        let loadedImageFileName = document.getElementById("imgTest").fileName;
+
+        if(loadedImageSource !== undefined){
+          requestData.set("newImage",loadedImageSource.replace("data:image/jpeg;base64,",""))
+          requestData.set("newImageFileName",loadedImageFileName)
+        }
+        let object = {};
+        requestData.forEach(function(value, key){
+            object[key] = value;
+        });
+        let jsonFormData = JSON.stringify(object);
+
+        fetch(scriptURL, {
+          redirect: "follow",
+          method: 'POST',
+          headers: {
+        "Content-Type": "text/plain;charset=utf-8",
+          },
+          body: jsonFormData})
+          .then(response => {
+            response.text().then(responseText =>{
+              if(responseText == "OK"){
+                showSuccess();
+                let imgElement = document.getElementById("imgTest");
+                imgElement.src = "";
+                imgElement.fileName = "";
+                document.getElementById("inputFileToLoad").value='';
+                console.log('Success!', response)
+              }
+              else {
+                showFailure();
+                console.error('Error!', responseText)
+              }
+            })
+          })
+          .catch(error => {
+            showFailure();
+            console.error('Error!', error.message)})
+      })
+
+      function encodeImageFileAsURL() {
+        var filesSelected = document.getElementById("inputFileToLoad").files;
+        if (filesSelected.length > 0) {
+          var fileToLoad = filesSelected[0];
+          var fileName = fileToLoad.name;
+          var fileReader = new FileReader();
+          document.getElementById("imgTest").fileName = fileName;
+          fileReader.onload = function(fileLoadedEvent) {
+            var srcData = fileLoadedEvent.target.result; // <--- data: base64
+
+            document.getElementById("imgTest").src = srcData;
+          }
+          fileReader.readAsDataURL(fileToLoad);
+        }
+      }
+    </script>
+  </body>
+</html>
